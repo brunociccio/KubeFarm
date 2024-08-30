@@ -1,7 +1,7 @@
 # Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
 # More GitHub Actions for Azure: https://github.com/Azure/actions
 
-name: Build and deploy JAR app to Azure Web App - KubeFarm
+name: Build and deploy Node.js app to Azure Web App - KubeFarm
 
 on:
   push:
@@ -16,23 +16,25 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Java version
-        uses: actions/setup-java@v4
+      - name: Set up Node.js version
+        uses: actions/setup-node@v3
         with:
-          java-version: '17'
-          distribution: 'microsoft'
+          node-version: '20.x'
 
-      - name: Build with Maven
-        run: mvn clean install
-
+      - name: npm install, build, and test
+        run: |
+          npm install
+          npm run build --if-present
+          npm run test --if-present
+      
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
-          name: java-app
-          path: '${{ github.workspace }}/target/*.jar'
+          name: node-app
+          path: .
 
   deploy:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     needs: build
     environment:
       name: 'Production'
@@ -44,20 +46,20 @@ jobs:
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
-          name: java-app
+          name: node-app
       
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_F91AE1542C52409A9286573DD781DA3D }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_ED4CDAE153E24D7CB211CCBF9F253684 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_9C75606077CF4592B9905F89B71373B6 }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_1B2D5047E9A4449182FD716882AB7BE8 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_189850F8F6D34B87B1DE4AF918C10CB1 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_8BBC23CBE6CC4DB1A4B5F250AEF24EB9 }}
 
-      - name: Deploy to Azure Web App
-        id: deploy-to-webapp
+      - name: 'Deploy to Azure Web App'
         uses: azure/webapps-deploy@v3
+        id: deploy-to-webapp
         with:
           app-name: 'KubeFarm'
           slot-name: 'Production'
-          package: '*.jar'
+          package: .
           
